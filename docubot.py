@@ -7,8 +7,10 @@ Core DocuBot class responsible for:
 - Supporting RAG answers when paired with Gemini (Phase 2)
 """
 
+from operator import index
 import os
 import glob
+import re
 
 class DocuBot:
     def __init__(self, docs_folder="docs", llm_client=None):
@@ -64,7 +66,19 @@ class DocuBot:
         ignore punctuation if needed.
         """
         index = {}
-        # TODO: implement simple indexing
+
+        for filename, text in documents:
+            words = text.lower().split()
+
+            for word in words:
+                word = word.strip(".,!?;:()[]{}")
+
+                if word not in index:
+                    index[word] = []
+
+                if filename not in index[word]:
+                    index[word].append(filename)
+
         return index
 
     # -----------------------------------------------------------
@@ -72,17 +86,41 @@ class DocuBot:
     # -----------------------------------------------------------
 
     def score_document(self, query, text):
-        """
-        TODO (Phase 1):
-        Return a simple relevance score for how well the text matches the query.
+        query_words = set(re.findall(r"\b\w+\b", query.lower()))
+        document_words = set(re.findall(r"\b\w+\b", text.lower()))
 
-        Suggested baseline:
-        - Convert query into lowercase words
-        - Count how many appear in the text
-        - Return the count as the score
+        # Ignore common words that do not help determine relevance
+        stop_words = {
+            "the", "is", "a", "an", "to", "of",
+            "in", "on", "and", "or", "how", "where",
+            "what", "which", "do", "does", "i"
+        }
+
+        query_words = query_words - stop_words
+
+        score = len(query_words.intersection(document_words))
+
+        return score
+
+    def split_document(self, text):
         """
-        # TODO: implement scoring
-        return 0
+        Splits a document into smaller sections using Markdown headings.
+        """
+        sections = []
+        current_section = []
+
+        for line in text.splitlines():
+            if line.startswith("## ") or line.startswith("### "):
+                if current_section:
+                    sections.append("\n".join(current_section))
+                    current_section = []
+
+            current_section.append(line)
+
+        if current_section:
+            sections.append("\n".join(current_section))
+
+        return sections
 
     def retrieve(self, query, top_k=3):
         """
@@ -92,8 +130,25 @@ class DocuBot:
         Return a list of (filename, text) sorted by score descending.
         """
         results = []
-        # TODO: implement retrieval logic
-        return results[:top_k]
+
+        for filename, text in self.documents:
+
+            sections = self.split_document(text)
+
+            for section in sections:
+                score = self.score_document(query, section)
+
+                if score > 0:
+                    results.append((score, filename, section))
+
+        results.sort(key=lambda result: result[0], reverse=True)
+
+        top_results = results[:top_k]
+
+        return [
+            (filename, section)
+            for score, filename, section in top_results
+        ]
 
     # -----------------------------------------------------------
     # Answering Modes
