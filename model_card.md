@@ -84,12 +84,6 @@ Run the **same set of queries** in all three modes. Fill in the table with short
 
 You can reuse or adapt the queries from `dataset.py`.
 
-| Query | Naive LLM: helpful or harmful? | Retrieval only: helpful or harmful? | RAG: helpful or harmful? | Notes |
-|------|---------------------------------|--------------------------------------|---------------------------|-------|
-| Example: Where is the auth token generated? | | | | |
-| Example: How do I connect to the database? | | | | |
-| Example: Which endpoint lists all users? | | | | |
-| Example: How does a client refresh an access token? | | | | |
 
 | Query | Naive LLM | Retrieval Only | RAG | Notes |
 |---|---|---|---|---|
@@ -176,13 +170,13 @@ List two or three changes that would most improve reliability or usefulness.
 **Where could this system cause real world harm if used carelessly?**  
 Think about wrong answers, missing information, or over trusting the LLM.
 
-> 
+DocuBot could cause real-world harm if developers rely on incorrect or incomplete answers without verifying the documentation. For example, incorrect authentication or database instructions could introduce security vulnerabilities, application errors, or data loss. Even though RAG uses retrieved documentation, it can still overlook important information. 
 
 **What instructions would you give real developers who want to use DocuBot safely?**  
 Write 2 to 4 short bullet points.
 
-- _Guideline 1_
-- _Guideline 2_
-- _Guideline 3 (optional)_
+- Verify important answers against the original documentation before implementing changes.
+
+- Test AI-generated code and configuration instructions instead of assuming they are correct.
 
 ---
